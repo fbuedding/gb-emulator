@@ -1,7 +1,8 @@
+#![allow(dead_code)]
 mod instruction;
 use std::fmt::Display;
 
-use instruction::{Instruction, R8};
+use instruction::{Instruction, JumpCondition, R8};
 
 const INSTRUCTION_PREFIX: u8 = 0xcb;
 
@@ -12,6 +13,11 @@ struct Cpu {
 }
 
 impl Cpu {
+    /// Steps to next instructions
+    ///
+    /// # Panics
+    ///
+    /// Panics if the instruction is unknown
     fn step(&mut self) {
         let mut next_byte = self.read_next_byte();
         let is_prefixed = if next_byte == INSTRUCTION_PREFIX {
@@ -26,13 +32,16 @@ impl Cpu {
         self.exec(instruction);
     }
 
+    /// Reads the next byte, incements PC
     fn read_next_byte(&mut self) -> u8 {
         let byte = self.bus.read_byte(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
         byte
     }
+
+    /// Reads the next two bytes interpreted as u16. Respects endiannes and increments PC
     fn read_next_2_bytes_le(&mut self) -> u16 {
-        let mut bytes = (self.bus.read_byte(self.registers.pc) as u16);
+        let mut bytes = self.bus.read_byte(self.registers.pc) as u16;
         self.registers.pc = self.registers.pc.wrapping_add(1);
         bytes |= (self.bus.read_byte(self.registers.pc) as u16) << 8;
         self.registers.pc = self.registers.pc.wrapping_add(1);
@@ -42,16 +51,42 @@ impl Cpu {
     fn exec(&mut self, instruction: Instruction) {
         match instruction {
             Instruction::Nop => {}
-            Instruction::JpImm => self.registers.pc = self.read_next_2_bytes_le(),
-            Instruction::LoadImm(target) => match target {
+            Instruction::Jp(jump_condition) => {
+                if match jump_condition {
+                    JumpCondition::Always => true,
+                    JumpCondition::Zero => self.registers.f.zero,
+                    JumpCondition::NotZero => !self.registers.f.zero,
+                    JumpCondition::Carry => self.registers.f.carry,
+                    JumpCondition::NotCarry => !self.registers.f.carry,
+                } {
+                    self.registers.pc = self.read_next_2_bytes_le();
+                } else {
+                    self.registers.pc = self.registers.pc.wrapping_add(2);
+                }
+            }
+            Instruction::LoadImm(dest) => match dest {
                 R8::A => self.registers.a = self.read_next_byte(),
                 _ => {
-                    todo!("Target {target:?} not implemented")
+                    todo!("Target {dest:?} not implemented")
                 }
             },
-            Instruction::AddAImm => self.registers.a += self.read_next_byte(),
+            Instruction::AddImm => {
+                let value = self.read_next_byte();
+                self.registers.a = self.add(value);
+            }
             _ => todo!("Instruction {:?} not implemented", instruction),
         }
+    }
+
+    fn add(&mut self, value: u8) -> u8 {
+        let (result, did_overflow) = self.registers.a.overflowing_add(value);
+        // setting flag registers
+        self.registers.f.zero = result == 0;
+        self.registers.f.substraction = false;
+        self.registers.f.carry = did_overflow;
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
+
+        return result;
     }
 }
 
@@ -244,6 +279,7 @@ mod tests {
         let flag_register: FlagRegister = register.into();
         assert!(flag_register.carry, "Carry flag not correctly set!");
     }
+
     #[test]
     fn u8_from_flag_register() {
         let register: u8 = FlagRegister {
