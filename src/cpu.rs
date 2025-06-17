@@ -66,14 +66,49 @@ impl Cpu {
             }
             Instruction::LoadImm(dest) => match dest {
                 R8::A => self.registers.a = self.read_next_byte(),
-                _ => {
-                    todo!("Target {dest:?} not implemented")
-                }
+                R8::B => self.registers.b = self.read_next_byte(),
+                R8::C => self.registers.c = self.read_next_byte(),
+                R8::D => self.registers.d = self.read_next_byte(),
+                R8::E => self.registers.e = self.read_next_byte(),
+                R8::H => self.registers.h = self.read_next_byte(),
+                R8::L => self.registers.l = self.read_next_byte(),
+                R8::Hl => self.registers.a = todo!("[HL] dest not implemented!"),
             },
             Instruction::AddImm => {
                 let value = self.read_next_byte();
                 self.registers.a = self.add(value);
             }
+            Instruction::Add(dest) => match dest {
+                R8::B => {
+                    let value = self.registers.b;
+                    self.registers.a = self.add(value);
+                }
+                R8::C => {
+                    let value = self.registers.c;
+                    self.registers.a = self.add(value);
+                }
+                R8::D => {
+                    let value = self.registers.d;
+                    self.registers.a = self.add(value);
+                }
+                R8::E => {
+                    let value = self.registers.e;
+                    self.registers.a = self.add(value);
+                }
+                R8::H => {
+                    let value = self.registers.h;
+                    self.registers.a = self.add(value);
+                }
+                R8::L => {
+                    let value = self.registers.l;
+                    self.registers.a = self.add(value);
+                }
+                R8::A => {
+                    let value = self.registers.a;
+                    self.registers.a = self.add(value);
+                }
+                R8::Hl => self.registers.a = todo!("[HL] dest not implemented!"),
+            },
             _ => todo!("Instruction {:?} not implemented", instruction),
         }
     }
@@ -244,6 +279,7 @@ mod tests {
     use super::*;
 
     const SIMPLE_ADD: &[u8] = include_bytes!("../test_roms/simple_add.gb");
+    const ALL_ADDS_AND_LOADS: &[u8] = include_bytes!("../test_roms/all_adds_and_loads.gb");
 
     #[test]
     fn flag_register_from_u8() {
@@ -367,5 +403,17 @@ mod tests {
         println!("{}", cpu.registers);
 
         assert_eq!(cpu.registers.a, 8);
+    }
+    #[test]
+    fn all_add_and_loads() {
+        let mut cpu = Cpu::default();
+        cpu.bus.copy_bytes(0, ALL_ADDS_AND_LOADS);
+
+        while cpu.registers.pc < 0xFFFF {
+            cpu.step();
+        }
+        println!("{}", cpu.registers);
+
+        assert_eq!(cpu.registers.a, 70);
     }
 }
