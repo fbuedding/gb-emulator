@@ -51,6 +51,16 @@ impl Cpu {
     fn exec(&mut self, instruction: Instruction) {
         match instruction {
             Instruction::Nop => {}
+            Instruction::LoadR16Imm(dest) => match dest {
+                instruction::R16::Bc => todo!(),
+                // instruction::R16::De => todo!(),
+                instruction::R16::Hl => {
+                    let value = self.read_next_2_bytes_le();
+                    self.registers.set_16b_register(Registers16b::HL, value);
+                }
+                // instruction::R16::Sp => todo!(),
+                _ => panic!("Destination {dest:?} for load immidiate r16"),
+            },
             Instruction::Jp(jump_condition) => {
                 if match jump_condition {
                     JumpCondition::Always => true,
@@ -78,7 +88,7 @@ impl Cpu {
                 let value = self.read_next_byte();
                 self.registers.a = self.add(value);
             }
-            Instruction::Add(dest) => match dest {
+            Instruction::AddA(dest) => match dest {
                 R8::B => {
                     let value = self.registers.b;
                     self.registers.a = self.add(value);
@@ -414,6 +424,7 @@ mod tests {
         }
         println!("{}", cpu.registers);
 
-        assert_eq!(cpu.registers.a, 70);
+        assert_eq!(cpu.registers.get_16b_register(Registers16b::HL), 15);
+        assert_eq!(cpu.registers.a, 5);
     }
 }
