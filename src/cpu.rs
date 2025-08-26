@@ -27,7 +27,7 @@ impl Cpu {
             false
         };
         let Some(instruction) = Instruction::from_byte(next_byte, is_prefixed) else {
-            panic!("Unknown opcode {next_byte:b}")
+            panic!("Unknown opcode 0x{next_byte:x}")
         };
         self.exec(instruction);
     }
@@ -51,7 +51,11 @@ impl Cpu {
     fn exec(&mut self, instruction: Instruction) {
         match instruction {
             Instruction::Nop => {}
-            Instruction::LoadR16Imm(dest) => match dest {
+            _ => println!("{instruction:?}"),
+        };
+        match instruction {
+            Instruction::Nop => {}
+            Instruction::LdR16Imm(dest) => match dest {
                 instruction::R16::Bc => todo!(),
                 // instruction::R16::De => todo!(),
                 instruction::R16::Hl => {
@@ -74,7 +78,7 @@ impl Cpu {
                     self.registers.pc = self.registers.pc.wrapping_add(2);
                 }
             }
-            Instruction::LoadImm(dest) => match dest {
+            Instruction::LdImm(dest) => match dest {
                 R8::A => self.registers.a = self.read_next_byte(),
                 R8::B => self.registers.b = self.read_next_byte(),
                 R8::C => self.registers.c = self.read_next_byte(),
@@ -82,9 +86,13 @@ impl Cpu {
                 R8::E => self.registers.e = self.read_next_byte(),
                 R8::H => self.registers.h = self.read_next_byte(),
                 R8::L => self.registers.l = self.read_next_byte(),
-                R8::Hl => self.registers.a = todo!("[HL] dest not implemented!"),
+                R8::Hl => {
+                    let byte = self.read_next_byte();
+                    self.bus
+                        .write_byte(self.registers.get_16b_register(Registers16b::HL), byte)
+                }
             },
-            Instruction::AddImm => {
+            Instruction::AddAImm => {
                 let value = self.read_next_byte();
                 self.registers.a = self.add(value);
             }
@@ -117,7 +125,12 @@ impl Cpu {
                     let value = self.registers.a;
                     self.registers.a = self.add(value);
                 }
-                R8::Hl => self.registers.a = todo!("[HL] dest not implemented!"),
+                R8::Hl => {
+                    let value = self
+                        .bus
+                        .read_byte(self.registers.get_16b_register(Registers16b::HL));
+                    self.registers.a = self.add(value);
+                }
             },
             _ => todo!("Instruction {:?} not implemented", instruction),
         }
@@ -152,6 +165,9 @@ impl Default for MemoryBus {
 impl MemoryBus {
     fn read_byte(&self, address: u16) -> u8 {
         self.memory[address as usize]
+    }
+    fn write_byte(&mut self, address: u16, byte: u8) {
+        self.memory[address as usize] = byte;
     }
 
     // TODO: maybe check bounds
@@ -424,7 +440,8 @@ mod tests {
         }
         println!("{}", cpu.registers);
 
-        assert_eq!(cpu.registers.get_16b_register(Registers16b::HL), 15);
-        assert_eq!(cpu.registers.a, 5);
+        assert_eq!(cpu.registers.a, 70);
+        assert_eq!(cpu.registers.h, 15);
+        assert_eq!(cpu.registers.l, 15);
     }
 }
