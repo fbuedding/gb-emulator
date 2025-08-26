@@ -170,8 +170,27 @@ pub(crate) enum Instruction {
     Shifts the 8-bit register r value right by one bit using a logical shift.
     Bit 7 is set to a fixed value of 0, and bit 0 is shifted to the carry flag
     or when r (HL)
+    SRL (HL): Shift right logical (indirect HL)
     */
     Srl(R8),
+    /**
+    BIT b, r: Test bit (register)
+    Tests the bit b of the 8-bit register r.
+    The zero flag is set to 1 if the chosen bit is 0, and 0 otherwise.
+    or when r (HL)
+    BIT b, (HL): Test bit (indirect HL)
+    */
+    Bit(u8, R8),
+    /// RES b, r: Reset bit (register)
+    /// Resets the bit b of the 8-bit register r to 0
+    /// or when r (HL)
+    /// RES b, (HL): Reset bit (indirect HL)
+    Res(u8, R8),
+    /// SET b, r: Set bit (register)
+    /// Sets the bit b of the 8-bit register r to 1.
+    /// or when r (HL)
+    /// SET b, (HL): Set bit (indirect HL
+    Set(u8, R8),
     Daa,
     Cpl,
     Scf,
@@ -202,10 +221,8 @@ impl Instruction {
         let x = byte >> 6;
         let y = (byte >> 3) & 0b111;
         let z = byte & 0b111;
-        let p = y >> 1;
-        let q = y % 2;
-        match x {
-            1 => match y {
+        return match x {
+            0 => match y {
                 0 => Some(Self::Rlc(R8::from(z))),
                 1 => Some(Self::Rrc(R8::from(z))),
                 2 => Some(Self::Rl(R8::from(z))),
@@ -216,8 +233,11 @@ impl Instruction {
                 7 => Some(Self::Srl(R8::from(z))),
                 _ => None,
             },
+            1 => Some(Self::Bit(y, R8::from(z))),
+            2 => Some(Self::Res(y, R8::from(z))),
+            3 => Some(Self::Set(y, R8::from(z))),
             _ => None,
-        }
+        };
     }
 
     fn from_byte_not_prefixed(byte: u8) -> Option<Instruction> {
@@ -377,52 +397,6 @@ impl Instruction {
             },
             _ => None,
         };
-
-        /*
-        match byte {
-            0x0 => Some(Self::Nop),
-            // 00_<3 destination bits>_110 load immidiate
-            byte @ (0b00_000_110..=0b00_111_110) => match byte >> 3 & R8_MASK {
-                byte if byte == R8::B as u8 => Some(Self::LoadImm(R8::B)),
-                byte if byte == R8::C as u8 => Some(Self::LoadImm(R8::C)),
-                byte if byte == R8::D as u8 => Some(Self::LoadImm(R8::D)),
-                byte if byte == R8::E as u8 => Some(Self::LoadImm(R8::E)),
-                byte if byte == R8::H as u8 => Some(Self::LoadImm(R8::H)),
-                byte if byte == R8::L as u8 => Some(Self::LoadImm(R8::L)),
-                byte if byte == R8::Hl as u8 => Some(Self::LoadImm(R8::Hl)),
-                byte if byte == R8::A as u8 => Some(Self::LoadImm(R8::A)),
-                _ => panic!("This shouldn't happen!"),
-            },
-            byte @ 0x1..=0b11_0001 => {
-                println!("Byte LoadImm R16:  {:#x}", byte);
-                match byte >> 4 & R16_MASK {
-                    byte if byte == R16::Bc as u8 => Some(Self::LoadR16Imm(R16::Bc)),
-                    byte if byte == R16::De as u8 => Some(Self::LoadR16Imm(R16::De)),
-                    byte if byte == R16::Hl as u8 => Some(Self::LoadR16Imm(R16::Hl)),
-                    byte if byte == R16::Sp as u8 => Some(Self::LoadR16Imm(R16::Sp)),
-                    _ => panic!("This shouldn't happen!"),
-                }
-            }
-            0xC3 => Some(Self::Jp(JumpCondition::Always)),
-            // Add
-            byte @ 0b10000_000..=0b10000_111 => match byte & R8_MASK {
-                byte if byte == R8::B as u8 => Some(Self::Add(R8::B)),
-                byte if byte == R8::C as u8 => Some(Self::Add(R8::C)),
-                byte if byte == R8::D as u8 => Some(Self::Add(R8::D)),
-                byte if byte == R8::E as u8 => Some(Self::Add(R8::E)),
-                byte if byte == R8::H as u8 => Some(Self::Add(R8::H)),
-                byte if byte == R8::L as u8 => Some(Self::Add(R8::L)),
-                byte if byte == R8::Hl as u8 => Some(Self::Add(R8::Hl)),
-                byte if byte == R8::A as u8 => Some(Self::Add(R8::A)),
-                _ => panic!("This shouldn't happen!"),
-            },
-            0xC6 => Some(Self::AddImm),
-            _ =>
-            /* TODO: Add mapping for rest of instructions */
-            {
-                None
-            }
-        }*/
     }
 }
 
