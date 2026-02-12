@@ -2,12 +2,12 @@
 
 Ein in **Rust** geschriebener Game Boy (DMG-01) Emulator.
 
-> **Status:** 🚧 In aktiver Entwicklung (Work In Progress).
+> **Status:** In aktiver Entwicklung (Work In Progress).
 > Aktuell liegt der Fokus auf der Implementierung der CPU-Instruktionen und der Architektur. Es ist noch keine grafische Ausgabe von Spielen möglich.
 
 Dieses Projekt dient primär zu Lernzwecken, um die interne Funktionsweise des Game Boys, die Z80-ähnliche Prozessorarchitektur und hardwarenahe Programmierung mit Rust zu verstehen.
 
-## 🌟 Features (Aktueller Stand)
+## Features (Aktueller Stand)
 
 * **CPU Core:**
     * Nachbildung der Register (8-Bit und 16-Bit Paare wie `AF`, `BC`, `HL`).
@@ -25,7 +25,7 @@ Dieses Projekt dient primär zu Lernzwecken, um die interne Funktionsweise des G
 * **Frontend:**
     * Initiale Einbindung von **Raylib** für zukünftiges Rendering und Input-Handling.
 
-## 🛠 Voraussetzungen
+## Voraussetzungen
 
 Um das Projekt zu bauen und die Tests auszuführen, werden folgende Tools benötigt:
 
@@ -33,7 +33,7 @@ Um das Projekt zu bauen und die Tests auszuführen, werden folgende Tools benöt
 2.  **RGBDS** (`rgbasm`, `rgblink`, `rgbfix`) - Wird benötigt, um die Test-ROMs im `test_roms/` Ordner zu kompilieren.
 3.  **Raylib** Development Libraries (abhängig vom Betriebssystem).
 
-## 🚀 Build & Run
+## Build & Run
 
 Das Projekt nutzt ein Build-Skript, das automatisch die Assembly-Dateien kompiliert, wenn Änderungen erkannt werden.
 
@@ -49,7 +49,7 @@ cargo run
 
 ```
 
-## 📚 Dokumentation & Referenzen
+## Dokumentation & Referenzen
 
 Die Entwicklung stützt sich auf diverse technische Dokumentationen, die im `docs/` Ordner referenziert werden.
 Die CPU-Implementierung orientiert sich unter anderem an:
@@ -57,7 +57,7 @@ Die CPU-Implementierung orientiert sich unter anderem an:
 * [Decoding Gameboy Z80 Opcodes](https://archive.gbdev.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html) - Algorithmus für das Instruction Decoding.
 * RGBDS Community & Pan Docs.
 
-## 📝 Roadmap
+## Roadmap
 
 * [x] Grundlegendes CPU-Gerüst & Memory Bus
 * [x] Automatische Kompilierung von Test-ROMs via `build.rs`
