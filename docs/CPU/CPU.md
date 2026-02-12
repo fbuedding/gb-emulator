@@ -1,0 +1,1 @@
+In the CPU Module consists of the memory bus, registers and handles [[Instructions]] decoding and executing.

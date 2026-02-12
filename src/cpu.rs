@@ -18,7 +18,7 @@ impl Cpu {
     /// # Panics
     ///
     /// Panics if the instruction is unknown
-    fn step(&mut self) {
+    fn step(&mut self) -> Instruction {
         let mut next_byte = self.read_next_byte();
         let is_prefixed = if next_byte == INSTRUCTION_PREFIX {
             next_byte = self.read_next_byte();
@@ -29,7 +29,8 @@ impl Cpu {
         let Some(instruction) = Instruction::from_byte(next_byte, is_prefixed) else {
             panic!("Unknown opcode 0x{next_byte:x}")
         };
-        self.exec(instruction);
+        self.exec(&instruction);
+        return instruction;
     }
 
     /// Reads the next byte, incements PC
@@ -48,11 +49,7 @@ impl Cpu {
         bytes
     }
 
-    fn exec(&mut self, instruction: Instruction) {
-        match instruction {
-            Instruction::Nop => {}
-            _ => println!("{instruction:?}"),
-        };
+    fn exec(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::Nop => {}
             Instruction::LdR16Imm(dest) => match dest {
@@ -436,7 +433,10 @@ mod tests {
         cpu.bus.copy_bytes(0, ALL_ADDS_AND_LOADS);
 
         while cpu.registers.pc < 0xFFFF {
-            cpu.step();
+            let instruction = cpu.step();
+            if !matches!(instruction, Instruction::Nop) {
+                println!("{:?}", instruction)
+            }
         }
         println!("{}", cpu.registers);
 

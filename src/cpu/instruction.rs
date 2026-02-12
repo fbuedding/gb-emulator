@@ -1,3 +1,7 @@
+/**
+Decoding is done by applying https://archive.gbdev.io/salvage/decoding_gbz80_opcodes/Decoding%20Gamboy%20Z80%20Opcodes.html
+*/
+
 const R8_MASK: u8 = 0b111;
 const R16_MASK: u8 = 0b11;
 #[derive(Debug)]
